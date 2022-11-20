@@ -35,9 +35,9 @@ class ETL:
         date_last_modified = last_modified if last_modified else datetime.min
         count = 0
         for films in self.postgres.extract_movies(date_last_modified):
+            self.state.set_state('modified', datetime.now().isoformat())
             es_films = self.transform.validate_and_transform_data(films)
             self.elastic.load_data_to_elastic(es_films)
-            self.state.set_state('modified', datetime.now().isoformat())
             count += len(films)
             logger.debug(LOAD_MESSAGE.format(number=count))
 
