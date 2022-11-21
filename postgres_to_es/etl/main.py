@@ -1,32 +1,24 @@
 import logging
-import os
 from datetime import datetime
 from time import sleep
 
 from config import etl_settings
-from dotenv import load_dotenv
 from extract_from_postgres import PostgresExtractor
 from load_to_elasticsearch import ElasticsearchLoader
 from state import JsonFileStorage, State
 from transform_data import DataTransform
 
-load_dotenv()
-
-LOGGING_LEVEL = os.environ.get("LOGGING_LEVEL")
-FILEMODE = os.environ.get("FILEMODE")
-FILENAME = os.environ.get("FILENAME")
-
-
 logging.basicConfig(
-    level=LOGGING_LEVEL,
-    filename=FILENAME,
+    level=etl_settings.LOGGING_LEVEL,
+    filename=etl_settings.FILENAME,
     format="%(asctime)s, %(levelname)s, %(message)s, %(name)s",
-    filemode=FILEMODE,
+    filemode=etl_settings.FILEMODE,
 )
 
 logger = logging.getLogger(__name__)
 
 LOAD_MESSAGE = "Load in Elasticsearch {number} documents."
+ERROR_MESSAGE = "ETL process failed. Error occurs: {error}."
 
 
 class ETL:
@@ -52,12 +44,16 @@ class ETL:
 def main():
     while True:
         etl = ETL()
-        etl.postgres.connect_to_postgres()
-        etl.elastic.connect()
-        etl.elastic.create_index()
-        etl.load_data_from_postgres_to_elastic()
-        etl.postgres.connection.close()
-        sleep(etl_settings.TIME_INTERVAL)
+        try:
+            etl.postgres.connect_to_postgres()
+            etl.elastic.connect()
+            etl.elastic.create_index()
+            etl.load_data_from_postgres_to_elastic()
+        except Exception as error:
+            logger.error(ERROR_MESSAGE.format(error=error))
+        finally:
+            etl.postgres.connection.close()
+            sleep(etl_settings.TIME_INTERVAL)
 
 
 if __name__ == "__main__":

@@ -35,7 +35,6 @@ def backoff(
                     sleep(sleep_time)
                     attempts += 1
             logger.error(MAX_ATTEMPTS)
-            exit()
 
         return inner
 
