@@ -12,5 +12,3 @@ Launch the project using the following docker-compose command:
 ```
 docker-compose up -d
 ```
-### Author:
-- https://github.com/valerycode/
